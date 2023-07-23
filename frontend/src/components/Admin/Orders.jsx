@@ -1,25 +1,34 @@
 import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { AiOutlineEye } from "react-icons/ai";
+import { GiArmoredBoomerang } from "react-icons/gi";
 import { useDispatch, useSelector } from "react-redux";
-import toast from "react-hot-toast";
-import { getMyOrders } from "../../redux/actions/order";
+import { getAdminOrders, processOrder } from "../../redux/actions/admin";
 import Loader from "../Layout/Loader";
+import toast from "react-hot-toast";
 
-const MyOrders = () => {
+const Orders = () => {
   const dispatch = useDispatch();
-  const { orders, loading, error } = useSelector((state) => state.orders);
-
+  const { orders, loading, message, error } = useSelector(
+    (state) => state.admin
+  );
+  const processOrderHandler = async (id) => {
+    await dispatch(processOrder(id));
+    dispatch(getAdminOrders());
+  };
   useEffect(() => {
-    dispatch(getMyOrders());
+    dispatch(getAdminOrders());
   }, [dispatch]);
   useEffect(() => {
+    if (message) {
+      toast.success(message);
+      dispatch({ type: "clearMessage" });
+    }
     if (error) {
       toast.error(error);
       dispatch({ type: "clearError" });
     }
-  }, [error,dispatch]);
-
+  }, [message, error, dispatch]);
   return (
     <section className="tableClass">
       {loading === false ? (
@@ -32,6 +41,7 @@ const MyOrders = () => {
                 <th>Item Qty</th>
                 <th>Amount</th>
                 <th>Payment Method</th>
+                <th>User</th>
                 <th>Action</th>
               </tr>
             </thead>
@@ -40,19 +50,25 @@ const MyOrders = () => {
               {orders &&
                 orders.map((i) => (
                   <tr key={i._id}>
-                    <td>#{i._id} </td>
+                    <td>#{i._id}</td>
                     <td>{i.orderStatus}</td>
                     <td>
+                      {" "}
                       {i.orderItems.cheeseBurger.quantity +
                         i.orderItems.vegCheeseBurger.quantity +
                         i.orderItems.burgerWithFries.quantity}
                     </td>
                     <td>₹{i.totalAmount}</td>
                     <td>{i.paymentMethod}</td>
+                    <td>{i.user.name}</td>
                     <td>
                       <Link to={`/order/${i._id}`}>
                         <AiOutlineEye />
                       </Link>
+
+                      <button onClick={() => processOrderHandler(i._id)}>
+                        <GiArmoredBoomerang />
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -66,4 +82,4 @@ const MyOrders = () => {
   );
 };
 
-export default MyOrders;
+export default Orders;
